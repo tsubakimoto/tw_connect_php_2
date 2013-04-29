@@ -3,6 +3,13 @@
 require_once('config.php');
 require_once('codebird.php');
 
+session_start();
+
+if (empty($_SESSION['me'])) {
+	header('Location: ' . SITE_URL . 'login.php');
+	exit;
+}
+
 ?>
 <!doctype html>
 <html lang="ja">
