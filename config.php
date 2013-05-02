@@ -19,7 +19,7 @@ create table users (
  
 */
 
-define('DNS', 'mysql:host=localhost;dbname=m_dotinstall_tw_connect_php_2');
+define('DSN', 'mysql:host=localhost;dbname=m_dotinstall_tw_connect_php_2');
 define('DB_USER', 'matsumura');
 define('DB_PASSWORD', 'matsumura');
 

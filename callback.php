@@ -39,8 +39,52 @@ if (! isset($_GET['oauth_verifier'])) {
 	$_SESSION['oauth_verified'] = true;
 	
 	$me = $cb->account_verifyCredentials();
-	var_dump($me);
-	exit;
+	
+	// DBに格納
+	try {
+		$dbh = new PDO(DSN, DB_USER, DB_PASSWORD);
+	} catch (PDOException $e) {
+		echo $e->getMessage();
+		exit;
+	}
+	
+	$sql = 'select * from users where tw_user_id = :id limit 1';
+	$stmt = $dbh->prepare($sql);
+	$stmt->execute(array(':id' => $me->id));
+	$user = $stmt->fetch();
+	
+	if (!$user) {
+		$sql = 'insert into users
+					(tw_user_id, tw_screen_name, tw_access_token,
+					tw_access_token_secret, created, modified)
+				values
+					(:tw_user_id, :tw_screen_name, :tw_access_token,
+					:tw_access_token_secret, now(), now())';
+		$stmt = $dbh->prepare($sql);
+		$params = array(
+			':tw_user_id' => $me->id_str
+			, ':tw_screen_name' => $me->screen_name
+			, ':tw_access_token' => $reply->oauth_token
+			, ':tw_access_token_secret' => $reply->oauth_token_secret
+		);
+		$stmt->execute($params);
+		
+		$myId = $dbh->lastInsertId();
+		$sql = 'select * from users where id = :id limit 1';
+		$stmt = $dbh->prepare($sql);
+		$stmt->execute(array(':id' => $myId));
+		$user = $stmt->fetch();
+	}
+	
+	// ログイン処理
+	if (!empty($user)) {
+		// セッションハイジャック対策
+		session_regenerate_id(true);
+		$_SESSION['me'] = $user;
+	}
+	
+	// ホームに飛ばす
+	header('Location: ' . SITE_URL);
 }
 
 /*
